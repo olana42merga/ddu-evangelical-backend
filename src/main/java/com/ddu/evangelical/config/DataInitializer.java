@@ -1,4 +1,4 @@
-﻿package com.ddu.evangelical.config;
+package com.ddu.evangelical.config;
 
 import com.ddu.evangelical.model.User;
 import com.ddu.evangelical.repository.UserRepository;
@@ -12,20 +12,16 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository) {
         return args -> {
-            // Check if admin exists to prevent duplicates on restart
             if (userRepository.findByUsername("admin").isEmpty()) {
                 User admin = new User();
                 admin.setFirstName("System");
                 admin.setLastName("Admin");
                 admin.setEmail("admin@ddu.com");
                 admin.setUsername("admin");
-
-                // Note: Since we haven't set up BCrypt encryption yet, this is plain text.
                 admin.setPassword("admin123");
                 admin.setRole("ADMIN");
-
                 userRepository.save(admin);
-                System.out.println("[OK] Live Admin User Created: admin / admin123");
+                System.out.println("Live Admin User Created: admin / admin123");
             }
         };
     }
