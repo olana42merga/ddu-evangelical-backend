@@ -12,19 +12,20 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository) {
         return args -> {
+            // Check if admin exists to prevent duplicates on restart
             if (userRepository.findByUsername("admin").isEmpty()) {
                 User admin = new User();
                 admin.setFirstName("System");
                 admin.setLastName("Admin");
                 admin.setEmail("admin@ddu.com");
                 admin.setUsername("admin");
-                
-                // Assuming your User model uses a String for password for now
-                admin.setPassword("admin123"); 
-                admin.setRole("ADMIN"); 
-                
+
+                // Note: Since we haven't set up BCrypt encryption yet, this is plain text.
+                admin.setPassword("admin123");
+                admin.setRole("ADMIN");
+
                 userRepository.save(admin);
-                System.out.println("✅ Live Admin User Created: admin / admin123");
+                System.out.println("[OK] Live Admin User Created: admin / admin123");
             }
         };
     }
