@@ -1,34 +1,31 @@
 package com.ddu.evangelical.config;
 
 import com.ddu.evangelical.model.User;
-import com.ddu.evangelical.model.Post; // ADDED
+import com.ddu.evangelical.model.Post;
 import com.ddu.evangelical.repository.UserRepository;
-import com.ddu.evangelical.repository.PostRepository; // ADDED
+import com.ddu.evangelical.repository.PostRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.PasswordEncoder; // ADDED
 
 @Configuration
 public class DataInitializer {
 
-    // ADDED PostRepository and PasswordEncoder to the parameters
     @Bean
-    CommandLineRunner initDatabase(UserRepository userRepository, PostRepository postRepository,
-            PasswordEncoder passwordEncoder) {
+    CommandLineRunner initDatabase(UserRepository userRepository, PostRepository postRepository) {
         return args -> {
 
-            // 1. Create Admin User
+            // 1. Create Admin User (Plain text password, as it was working before)
             if (userRepository.findByUsername("admin").isEmpty()) {
                 User admin = new User();
                 admin.setFirstName("System");
                 admin.setLastName("Admin");
                 admin.setEmail("admin@ddu.com");
                 admin.setUsername("admin");
-                admin.setPassword(passwordEncoder.encode("admin123")); // Encrypted password
+                admin.setPassword("admin123");
                 admin.setRole("ADMIN");
                 userRepository.save(admin);
-                System.out.println("Live Admin User Created securely!");
+                System.out.println("Live Admin User Created: admin / admin123");
             }
 
             // 2. Create a Test Post if the database is empty
