@@ -1,4 +1,5 @@
 package com.ddu.evangelical.controller;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -6,19 +7,26 @@ import org.springframework.http.HttpStatus;
 import com.ddu.evangelical.model.Program;
 import com.ddu.evangelical.service.ProgramService;
 import com.ddu.evangelical.dto.ProgramRequest;
+import com.ddu.evangelical.service.email.EmailService; // ADDED
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/programs")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class ProgramController {
+
     @Autowired
     private ProgramService programService;
 
+    @Autowired
+    private EmailService emailService; // ADDED
+
     @GetMapping
-    public List<Program> getAll() { return programService.getAll(); }
+    public List<Program> getAll() {
+        return programService.getAll();
+    }
 
     @PostMapping
     public ResponseEntity<?> save(@RequestBody ProgramRequest req) {
@@ -36,12 +44,28 @@ public class ProgramController {
             p.setReminder12hSent(false);
             p.setReminder3hSent(false);
             p.setReminder1hSent(false);
-            return ResponseEntity.ok(programService.save(p));
+
+            Program savedProgram = programService.save(p);
+
+            // SEND EMAIL
+            try {
+                emailService.sendEmail(
+                        "obayecha@gmail.com",
+                        "New Program Scheduled: " + savedProgram.getTitle(),
+                        "A new event has been scheduled:\n\nLocation: " + savedProgram.getLocation() + "\nDate: "
+                                + savedProgram.getProgramDate() + "\nTime: " + savedProgram.getProgramTime());
+            } catch (Exception e) {
+                System.out.println("Email failed: " + e.getMessage());
+            }
+
+            return ResponseEntity.ok(savedProgram);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) { programService.delete(id); }
+    public void delete(@PathVariable Long id) {
+        programService.delete(id);
+    }
 }

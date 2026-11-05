@@ -7,29 +7,43 @@ import org.springframework.http.HttpStatus;
 import com.ddu.evangelical.service.AuthService;
 import com.ddu.evangelical.model.User;
 import com.ddu.evangelical.dto.LoginRequest;
+import com.ddu.evangelical.service.email.EmailService; // ADDED
 import java.util.Map;
 import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*") // Changed to * for Vercel/Netlify
 public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private EmailService emailService; // ADDED
 
     @PostMapping("/login")
     public User login(@RequestBody LoginRequest request) {
         return authService.login(request.getUsername(), request.getPassword());
     }
 
-    // 1. SELF REGISTRATION (Forced MEMBER role)
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         try {
-            // Force the role to MEMBER so self-registering users cannot create Admin accounts
-            user.setRole("MEMBER"); 
+            user.setRole("MEMBER");
             User registeredUser = authService.register(user);
+
+            // SEND WELCOME EMAIL
+            try {
+                emailService.sendEmail(
+                        registeredUser.getEmail(),
+                        "Welcome to FOCUS DDU Evangelical Team!",
+                        "Hello " + registeredUser.getFirstName()
+                                + ",\n\nWelcome to the team! Your account has been created successfully.");
+            } catch (Exception e) {
+                System.out.println("Email failed: " + e.getMessage());
+            }
+
             return ResponseEntity.ok(registeredUser);
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
@@ -38,20 +52,28 @@ public class AuthController {
         }
     }
 
-    // 2. ADMIN CREATION (Admin can specify role)
     @PostMapping("/create-member")
     public ResponseEntity<?> createMember(@RequestBody Map<String, String> body) {
         try {
-            // Note: In a production app, you MUST secure this endpoint using Spring Security 
-            // (e.g., @PreAuthorize("hasRole('ADMIN')")) so only admins can access it.
-            
             User user = authService.createMember(
-                body.get("email"),
-                body.get("firstName"),
-                body.get("lastName"),
-                body.get("phone"),
-                body.getOrDefault("role", "MEMBER") // Uses the role provided by the Admin
-            );
+                    body.get("email"),
+                    body.get("firstName"),
+                    body.get("lastName"),
+                    body.get("phone"),
+                    body.getOrDefault("role", "MEMBER"));
+
+            // SEND ACCOUNT CREATION EMAIL
+            try {
+                emailService.sendEmail(
+                        user.getEmail(),
+                        "Your DDU Evangelical Team Account",
+                        "Hello " + user.getFirstName()
+                                + ",\n\nAn account has been created for you by the Admin.\nUsername: "
+                                + user.getUsername() + "\nPassword: " + user.getPassword());
+            } catch (Exception e) {
+                System.out.println("Email failed: " + e.getMessage());
+            }
+
             return ResponseEntity.ok(user);
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();

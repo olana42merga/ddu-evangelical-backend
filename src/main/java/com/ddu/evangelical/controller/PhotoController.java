@@ -1,10 +1,12 @@
 package com.ddu.evangelical.controller;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import com.ddu.evangelical.model.Photo;
 import com.ddu.evangelical.repository.PhotoRepository;
+import com.ddu.evangelical.service.email.EmailService; // ADDED
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,15 +18,21 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/photos")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class PhotoController {
+
     @Autowired
     private PhotoRepository photoRepository;
+
+    @Autowired
+    private EmailService emailService; // ADDED
 
     private final String UPLOAD_DIR = "./uploads/photos/";
 
     @GetMapping
-    public List<Photo> getAll() { return photoRepository.findAll(); }
+    public List<Photo> getAll() {
+        return photoRepository.findAll();
+    }
 
     @PostMapping("/upload")
     public ResponseEntity<?> upload(
@@ -32,11 +40,13 @@ public class PhotoController {
             @RequestParam(value = "title", required = false) String title) {
         try {
             File dir = new File(UPLOAD_DIR);
-            if (!dir.exists()) dir.mkdirs();
+            if (!dir.exists())
+                dir.mkdirs();
 
             String ext = "";
             String orig = file.getOriginalFilename();
-            if (orig != null && orig.contains(".")) ext = orig.substring(orig.lastIndexOf("."));
+            if (orig != null && orig.contains("."))
+                ext = orig.substring(orig.lastIndexOf("."));
             String filename = UUID.randomUUID().toString() + ext;
 
             Path path = Paths.get(UPLOAD_DIR + filename);
@@ -46,6 +56,16 @@ public class PhotoController {
             p.setTitle(title != null ? title : orig);
             p.setFilePath("/uploads/photos/" + filename);
             photoRepository.save(p);
+
+            // SEND EMAIL
+            try {
+                emailService.sendEmail(
+                        "obayecha@gmail.com",
+                        "New Photo Uploaded: " + p.getTitle(),
+                        "A new photo has been uploaded to the gallery.");
+            } catch (Exception e) {
+                System.out.println("Email failed: " + e.getMessage());
+            }
 
             return ResponseEntity.ok(p);
         } catch (IOException e) {

@@ -1,10 +1,12 @@
 package com.ddu.evangelical.controller;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import com.ddu.evangelical.model.Pdf;
 import com.ddu.evangelical.repository.PdfRepository;
+import com.ddu.evangelical.service.email.EmailService; // ADDED
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,15 +18,21 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pdfs")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class PdfController {
+
     @Autowired
     private PdfRepository pdfRepository;
+
+    @Autowired
+    private EmailService emailService; // ADDED
 
     private final String UPLOAD_DIR = "./uploads/pdfs/";
 
     @GetMapping
-    public List<Pdf> getAll() { return pdfRepository.findAll(); }
+    public List<Pdf> getAll() {
+        return pdfRepository.findAll();
+    }
 
     @PostMapping("/upload")
     public ResponseEntity<?> upload(
@@ -32,7 +40,8 @@ public class PdfController {
             @RequestParam(value = "title", required = false) String title) {
         try {
             File dir = new File(UPLOAD_DIR);
-            if (!dir.exists()) dir.mkdirs();
+            if (!dir.exists())
+                dir.mkdirs();
 
             String orig = file.getOriginalFilename();
             String filename = UUID.randomUUID().toString() + ".pdf";
@@ -44,6 +53,16 @@ public class PdfController {
             p.setTitle(title != null ? title : orig);
             p.setFilePath("/uploads/pdfs/" + filename);
             pdfRepository.save(p);
+
+            // SEND EMAIL
+            try {
+                emailService.sendEmail(
+                        "obayecha@gmail.com",
+                        "New PDF Uploaded: " + p.getTitle(),
+                        "A new PDF document has been uploaded to the website.");
+            } catch (Exception e) {
+                System.out.println("Email failed: " + e.getMessage());
+            }
 
             return ResponseEntity.ok(p);
         } catch (IOException e) {
