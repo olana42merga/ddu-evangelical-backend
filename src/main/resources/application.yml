@@ -7,15 +7,15 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-  # Using H2 In-Memory Database for Render (No localhost connection needed)
+  # PostgreSQL configuration for Render
   datasource:
-    url: jdbc:h2:mem:evandata;DB_CLOSE_DELAY=-1
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: true
@@ -23,10 +23,10 @@ spring:
       hibernate:
         format_sql: true
 
+  # Mail configuration
   mail:
     host: smtp.gmail.com
     port: 587
-    # Using environment variables so your password is safe
     username: ${MAIL_USERNAME:obayecha@gmail.com}
     password: ${MAIL_PASSWORD:objppqedrajxfdec}
     properties:
