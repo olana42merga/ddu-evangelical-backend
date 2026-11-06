@@ -3,15 +3,13 @@ package com.ddu.evangelical.controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 import com.ddu.evangelical.model.Pdf;
 import com.ddu.evangelical.repository.PdfRepository;
-import com.ddu.evangelical.service.email.EmailService; // ADDED
-import java.io.File;
+import com.ddu.evangelical.service.email.EmailService;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,9 +23,7 @@ public class PdfController {
     private PdfRepository pdfRepository;
 
     @Autowired
-    private EmailService emailService; // ADDED
-
-    private final String UPLOAD_DIR = "./uploads/pdfs/";
+    private EmailService emailService;
 
     @GetMapping
     public List<Pdf> getAll() {
@@ -39,19 +35,15 @@ public class PdfController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "title", required = false) String title) {
         try {
-            File dir = new File(UPLOAD_DIR);
-            if (!dir.exists())
-                dir.mkdirs();
-
-            String orig = file.getOriginalFilename();
-            String filename = UUID.randomUUID().toString() + ".pdf";
-
-            Path path = Paths.get(UPLOAD_DIR + filename);
-            Files.write(path, file.getBytes());
-
             Pdf p = new Pdf();
-            p.setTitle(title != null ? title : orig);
-            p.setFilePath("/uploads/pdfs/" + filename);
+            p.setTitle(title != null ? title : file.getOriginalFilename());
+
+            // SAVE FILE DIRECTLY TO DATABASE
+            p.setFileData(file.getBytes());
+
+            // Placeholder path (we will use the ID to view it)
+            p.setFilePath("/api/pdfs/download/" + UUID.randomUUID().toString());
+
             pdfRepository.save(p);
 
             // SEND EMAIL
@@ -68,6 +60,20 @@ public class PdfController {
         } catch (IOException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // ADD THIS: Endpoint to view/download the PDF
+    @GetMapping("/download/{id}")
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
+        Pdf pdf = pdfRepository.findById(id).orElse(null);
+        if (pdf == null || pdf.getFileData() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + pdf.getTitle() + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf.getFileData());
     }
 
     @DeleteMapping("/{id}")

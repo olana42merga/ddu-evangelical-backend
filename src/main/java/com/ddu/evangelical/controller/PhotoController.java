@@ -3,15 +3,13 @@ package com.ddu.evangelical.controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 import com.ddu.evangelical.model.Photo;
 import com.ddu.evangelical.repository.PhotoRepository;
-import com.ddu.evangelical.service.email.EmailService; // ADDED
-import java.io.File;
+import com.ddu.evangelical.service.email.EmailService;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,9 +23,7 @@ public class PhotoController {
     private PhotoRepository photoRepository;
 
     @Autowired
-    private EmailService emailService; // ADDED
-
-    private final String UPLOAD_DIR = "./uploads/photos/";
+    private EmailService emailService;
 
     @GetMapping
     public List<Photo> getAll() {
@@ -39,25 +35,15 @@ public class PhotoController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "title", required = false) String title) {
         try {
-            File dir = new File(UPLOAD_DIR);
-            if (!dir.exists())
-                dir.mkdirs();
-
-            String ext = "";
-            String orig = file.getOriginalFilename();
-            if (orig != null && orig.contains("."))
-                ext = orig.substring(orig.lastIndexOf("."));
-            String filename = UUID.randomUUID().toString() + ext;
-
-            Path path = Paths.get(UPLOAD_DIR + filename);
-            Files.write(path, file.getBytes());
-
             Photo p = new Photo();
-            p.setTitle(title != null ? title : orig);
-            p.setFilePath("/uploads/photos/" + filename);
+            p.setTitle(title != null ? title : file.getOriginalFilename());
+
+            // SAVE IMAGE TO DATABASE
+            p.setFileData(file.getBytes());
+            p.setFilePath("/api/photos/view/" + UUID.randomUUID().toString());
+
             photoRepository.save(p);
 
-            // SEND EMAIL
             try {
                 emailService.sendEmail(
                         "obayecha@gmail.com",
@@ -71,6 +57,19 @@ public class PhotoController {
         } catch (IOException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // NEW ENDPOINT: View the image from the database
+    @GetMapping("/view/{id}")
+    public ResponseEntity<byte[]> viewImage(@PathVariable Long id) {
+        Photo photo = photoRepository.findById(id).orElse(null);
+        if (photo == null || photo.getFileData() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .contentType(MediaType.IMAGE_JPEG) // Supports most images
+                .body(photo.getFileData());
     }
 
     @DeleteMapping("/{id}")

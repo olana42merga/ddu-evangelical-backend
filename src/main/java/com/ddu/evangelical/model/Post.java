@@ -1,4 +1,5 @@
 package com.ddu.evangelical.model;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -19,6 +20,11 @@ public class Post {
 
     @Column(name = "image_path")
     private String imagePath;
+
+    // ADD THIS: Store the actual image in the DB
+    @Lob
+    @Column(name = "image_data", columnDefinition = "bytea")
+    private byte[] imageData;
 
     private LocalDateTime createdAt;
 
