@@ -49,13 +49,8 @@ public class PostController {
             Post saved = postRepository.save(post);
 
             try {
-                emailService.sendEmail(
-                        "obayecha@gmail.com",
-                        "New Post Created: " + title,
-                        "A new post was created:\n\nTitle: " + title + "\n\nContent:\n" + content);
-                System.out.println("✅ Email notification sent.");
+                emailService.sendEmail("obayecha@gmail.com", "New Post: " + title, "New post created.");
             } catch (Exception e) {
-                System.out.println("❌ Email failed: " + e.getMessage());
             }
 
             return ResponseEntity.ok(saved);
@@ -64,7 +59,7 @@ public class PostController {
         }
     }
 
-    // NEW ENDPOINT: View the image from the database
+    // ENDPOINT TO VIEW IMAGE
     @GetMapping("/image/{id}")
     public ResponseEntity<byte[]> viewImage(@PathVariable Long id) {
         Post post = postRepository.findById(id).orElse(null);

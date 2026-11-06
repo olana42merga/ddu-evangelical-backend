@@ -38,19 +38,15 @@ public class PhotoController {
             Photo p = new Photo();
             p.setTitle(title != null ? title : file.getOriginalFilename());
 
-            // SAVE IMAGE TO DATABASE
+            // SAVE PHOTO TO DATABASE
             p.setFileData(file.getBytes());
             p.setFilePath("/api/photos/view/" + UUID.randomUUID().toString());
 
             photoRepository.save(p);
 
             try {
-                emailService.sendEmail(
-                        "obayecha@gmail.com",
-                        "New Photo Uploaded: " + p.getTitle(),
-                        "A new photo has been uploaded to the gallery.");
+                emailService.sendEmail("obayecha@gmail.com", "New Photo: " + p.getTitle(), "New photo uploaded.");
             } catch (Exception e) {
-                System.out.println("Email failed: " + e.getMessage());
             }
 
             return ResponseEntity.ok(p);
@@ -59,7 +55,7 @@ public class PhotoController {
         }
     }
 
-    // NEW ENDPOINT: View the image from the database
+    // ENDPOINT TO VIEW PHOTO
     @GetMapping("/view/{id}")
     public ResponseEntity<byte[]> viewImage(@PathVariable Long id) {
         Photo photo = photoRepository.findById(id).orElse(null);
@@ -68,7 +64,7 @@ public class PhotoController {
         }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                .contentType(MediaType.IMAGE_JPEG) // Supports most images
+                .contentType(MediaType.IMAGE_JPEG)
                 .body(photo.getFileData());
     }
 

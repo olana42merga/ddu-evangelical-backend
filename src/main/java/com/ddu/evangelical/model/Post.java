@@ -21,9 +21,9 @@ public class Post {
     @Column(name = "image_path")
     private String imagePath;
 
-    // ADD THIS: Store the actual image in the DB
+    // SAVE IMAGE TO DB
     @Lob
-    @Column(name = "image_data", columnDefinition = "bytea")
+    @Column(name = "image_data")
     private byte[] imageData;
 
     private LocalDateTime createdAt;

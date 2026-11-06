@@ -12,11 +12,10 @@ public class Pdf {
     private Long id;
 
     private String title;
-
     private String filePath;
 
-    // THIS IS THE MISSING PIECE
+    // SAVE PDF TO DB
     @Lob
-    @Column(name = "file_data", columnDefinition = "bytea")
+    @Column(name = "file_data")
     private byte[] fileData;
 }

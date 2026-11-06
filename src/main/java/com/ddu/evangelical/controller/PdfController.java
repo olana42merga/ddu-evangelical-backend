@@ -38,22 +38,15 @@ public class PdfController {
             Pdf p = new Pdf();
             p.setTitle(title != null ? title : file.getOriginalFilename());
 
-            // SAVE FILE DIRECTLY TO DATABASE
+            // SAVE PDF TO DATABASE
             p.setFileData(file.getBytes());
-
-            // Placeholder path (we will use the ID to view it)
             p.setFilePath("/api/pdfs/download/" + UUID.randomUUID().toString());
 
             pdfRepository.save(p);
 
-            // SEND EMAIL
             try {
-                emailService.sendEmail(
-                        "obayecha@gmail.com",
-                        "New PDF Uploaded: " + p.getTitle(),
-                        "A new PDF document has been uploaded to the website.");
+                emailService.sendEmail("obayecha@gmail.com", "New PDF: " + p.getTitle(), "New PDF uploaded.");
             } catch (Exception e) {
-                System.out.println("Email failed: " + e.getMessage());
             }
 
             return ResponseEntity.ok(p);
@@ -62,14 +55,13 @@ public class PdfController {
         }
     }
 
-    // ADD THIS: Endpoint to view/download the PDF
+    // ENDPOINT TO DOWNLOAD PDF
     @GetMapping("/download/{id}")
     public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
         Pdf pdf = pdfRepository.findById(id).orElse(null);
         if (pdf == null || pdf.getFileData() == null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + pdf.getTitle() + "\"")
                 .contentType(MediaType.APPLICATION_PDF)

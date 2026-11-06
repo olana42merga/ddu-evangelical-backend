@@ -14,8 +14,8 @@ public class Photo {
     private String title;
     private String filePath;
 
-    // ADD THIS: Store the actual image in the DB
+    // SAVE PHOTO TO DB
     @Lob
-    @Column(name = "file_data", columnDefinition = "bytea")
+    @Column(name = "file_data")
     private byte[] fileData;
 }
