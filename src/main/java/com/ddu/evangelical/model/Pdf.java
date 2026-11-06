@@ -14,7 +14,6 @@ public class Pdf {
     private String title;
     private String filePath;
 
-    // SAVE PDF TO DB
     @Lob
     @Column(name = "file_data")
     private byte[] fileData;

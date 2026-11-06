@@ -41,7 +41,6 @@ public class PostController {
             post.setContent(content);
 
             if (image != null && !image.isEmpty()) {
-                // SAVE IMAGE TO DATABASE
                 post.setImageData(image.getBytes());
                 post.setImagePath("/api/posts/image/" + UUID.randomUUID().toString());
             }
@@ -59,7 +58,6 @@ public class PostController {
         }
     }
 
-    // ENDPOINT TO VIEW IMAGE
     @GetMapping("/image/{id}")
     public ResponseEntity<byte[]> viewImage(@PathVariable Long id) {
         Post post = postRepository.findById(id).orElse(null);

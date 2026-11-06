@@ -21,7 +21,7 @@ public class Post {
     @Column(name = "image_path")
     private String imagePath;
 
-    // SAVE IMAGE TO DB
+    // Save image to DB
     @Lob
     @Column(name = "image_data")
     private byte[] imageData;

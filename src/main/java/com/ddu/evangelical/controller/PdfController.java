@@ -37,8 +37,6 @@ public class PdfController {
         try {
             Pdf p = new Pdf();
             p.setTitle(title != null ? title : file.getOriginalFilename());
-
-            // SAVE PDF TO DATABASE
             p.setFileData(file.getBytes());
             p.setFilePath("/api/pdfs/download/" + UUID.randomUUID().toString());
 
@@ -55,7 +53,6 @@ public class PdfController {
         }
     }
 
-    // ENDPOINT TO DOWNLOAD PDF
     @GetMapping("/download/{id}")
     public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
         Pdf pdf = pdfRepository.findById(id).orElse(null);

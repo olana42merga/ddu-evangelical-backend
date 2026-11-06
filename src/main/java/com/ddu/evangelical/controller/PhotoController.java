@@ -37,8 +37,6 @@ public class PhotoController {
         try {
             Photo p = new Photo();
             p.setTitle(title != null ? title : file.getOriginalFilename());
-
-            // SAVE PHOTO TO DATABASE
             p.setFileData(file.getBytes());
             p.setFilePath("/api/photos/view/" + UUID.randomUUID().toString());
 
@@ -55,7 +53,6 @@ public class PhotoController {
         }
     }
 
-    // ENDPOINT TO VIEW PHOTO
     @GetMapping("/view/{id}")
     public ResponseEntity<byte[]> viewImage(@PathVariable Long id) {
         Photo photo = photoRepository.findById(id).orElse(null);
